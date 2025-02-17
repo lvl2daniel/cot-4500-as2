@@ -43,22 +43,26 @@ def newton_interpolation(x_vals, divided_diffs, target_x):
 
 def hermite_interpolation(x_vals, y_vals, derivatives):
     n = len(x_vals)
-    m = 2 * n
-    table = np.zeros((m, m))
+    twice = 2 * n
+    m = np.zeros(twice)
+    table = np.zeros((twice, twice))
     
+
     for i in range(n):
-        table[2 * i][0] = x_vals[i]
-        table[2 * i + 1][0] = x_vals[i]
-        table[2 * i][1] = y_vals[i]
-        table[2 * i + 1][1] = y_vals[i]
-        table[2 * i + 1][2] = derivatives[i]
+        twice_i = 2 * i
+        m[twice_i] = m[twice_i + 1] = x_vals[i]
+        table[twice_i][0] = table[twice_i + 1][0] = y_vals[i]
+        table[twice_i + 1][1] = derivatives[i]
+
+        if i != 0:
+            table[twice_i][1] = (table[twice_i][0] - table[twice_i - 1][0]) / (m[twice_i] - m[twice_i - 1])
     
-    for j in range(2, m):
-        for i in range(j, m):
+    for j in range(2, twice):
+        for i in range(j, twice):
             if table[i][j] == 0:
-                table[i][j] = (table[i][j - 1] - table[i - 1][j - 1]) / (table[i][0] - table[i - j + 1][0])
+                table[i][j] = (table[i][j - 1] - table[i - 1][j - 1]) / (m[i] - m[i - j])
     
-    return table
+    return m, table
 
 def cubic_spline_interpolation(x_vals, y_vals):
     n = len(x_vals)
@@ -101,12 +105,13 @@ def main():
     f_vals = [1.675, 1.436, 1.318]
     f_derivatives = [-1.195, -1.188, -1.182]
     
-    hermite_result = hermite_interpolation(x3_vals, f_vals, f_derivatives)
-    print("Question 4:\n")
-    for row in hermite_result:
-        print(" ".join(f"{num:.7e}" for num in row))
-    print("\n")
+    m, table = hermite_interpolation(x3_vals, f_vals, f_derivatives)
     
+    print("Question 4:\n")
+    for i in range(len(m)):
+        row = [f"{m[i]:.6e}\t"] + [f"{table[i, j]:.6e}\t" for j in range(4)]
+        print("".join(row))
+    print()
     x_spline = [2, 5, 8, 10]
     y_spline = [3, 5, 7, 9]
     
